@@ -10,7 +10,7 @@ monza:
   track_name: monza
   track_configuration:
   track_file: monza.csv
-  track_grid_file: monza_0.1m.pkl
+  track_grid_file: monza_1.0m.pkl
   ref_lap_file: monza-racing_line.csv
   TrackLength: 5758.66064453125
 
