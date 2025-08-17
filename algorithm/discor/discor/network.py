@@ -103,3 +103,45 @@ class GaussianPolicy(BaseNetwork):
         entropies = -log_probs.sum(dim=1, keepdim=True)
 
         return actions, entropies, torch.tanh(means)
+
+class QuantileStateActionFunction(BaseNetwork): 
+    """
+    Critic for QR-SAC who outputs K quantiles per state-action pair (s, a)
+    """
+    def __init__(self, state_dim, action_dim, num_quantiles=32,
+                 hidden_units=[256, 256]):
+        super().__init__()
+        self.num_quantiles = num_quantiles
+        self.net = create_linear_network(
+            input_dim=state_dim+action_dim,
+            # Outputs 'K' quantiles per (s, a) pair
+            output_dim=num_quantiles,
+            hidden_units=hidden_units
+        )
+
+    def forward(self, x):
+        """
+        x is concatenated [batch_size, state_dim + action_dim]
+        """
+        return self.net(x)
+
+class TwinnedQuantileStateActionFunction(BaseNetwork):
+    """
+    Class for twin quantile networks (q1, q2) for QR-SAC
+    """
+    def __init__(self, state_dim, action_dim, num_quantiles=32,
+                 hidden_units=[256, 256]):
+        super().__init__()
+        self.net1 = QuantileStateActionFunction(state_dim, action_dim, 
+                                                num_quantiles, hidden_units)
+        self.net2 = QuantileStateActionFunction(state_dim, action_dim, 
+                                                num_quantiles, hidden_units)
+
+    def forward(self, states, actions):
+        assert states.dim() == 2 and actions.dim() == 2
+        # Concatening to pass to forward of net1, net2
+        x = torch.cat([states, actions], dim=1)
+        # q1, q2 in form [batch_size, num_quantiles]
+        q1 = self.net1(x)
+        q2 = self.net2(x)
+        return q1, q2

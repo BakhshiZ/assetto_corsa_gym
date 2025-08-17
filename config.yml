@@ -31,6 +31,20 @@ Agent:
   num_eval_episodes: 1
   checkpoint_freq: 200_000
 
+QRSAC:
+  hidden_units: [256, 256]
+  num_quantiles: 32
+  gamma: 0.99
+  device: "auto"
+  tau: 0.005
+  actor_lr: 3e-4
+  critic_lr: 3e-4
+  alpha_lr: 3e-4
+  autotune_alpha: True
+  target_entropy: null
+  quantile_huber_kappa: 1.0
+  nstep: 1
+
 SAC:
   gamma: 0.992
   nstep: 3

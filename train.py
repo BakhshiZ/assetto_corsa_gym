@@ -14,8 +14,9 @@ sys.path.extend([os.path.abspath('./assetto_corsa_gym'), './algorithm/discor'])
 # Custom module imports
 import AssettoCorsaEnv.assettoCorsa as assettoCorsa
 import AssettoCorsaEnv.data_loader as data_loader
-from discor.algorithm import SAC, DisCor
+from discor.algorithm import SAC, DisCor, QRSAC
 from discor.agent import Agent
+from algorithm.discor.discor.algorithm.qrsac import QRSAC_Config
 import common.misc as misc
 import common.logging_config as logging_config
 from common.logger import Logger
@@ -84,8 +85,15 @@ def main():
             action_dim=env.action_space.shape[0],
             device=device, seed=config.seed,
             **OmegaConf.to_container(config.SAC))
+    elif args.algo == 'qrsac':
+        cfg = QRSAC_Config(
+            state_dim=env.observation_space.shape[0],
+            action_dim=env.action_space.shape[0],
+            **OmegaConf.to_container(config.QRSAC)
+        )
+        algo=QRSAC(cfg)
     else:
-        raise Exception('You need to set algo sac or discor')
+        raise Exception('You need to set algo sac, qrsac or discor')
 
 
     # Update the logger configuration with dynamic values
