@@ -272,9 +272,29 @@ class QRSAC:
 
 
     def load_models(self, dir_path):
-        self.policy_net.load_state_dict(torch.load(os.path.join(dir_path, "policy.pth"), map_location=self.device))
-        self.critics_net.load_state_dict(torch.load(os.path.join(dir_path, "critics.pth"), map_location=self.device))
-        self.target_critics_net.load_state_dict(torch.load(os.path.join(dir_path, "target_critics.pth"), map_location=self.device))
+        # Try to load QR-SAC format first, fallback to SAC format
+        policy_path = os.path.join(dir_path, "policy.pth")
+        if not os.path.exists(policy_path):
+            # Fallback to SAC format
+            policy_path = os.path.join(dir_path, "policy_net.pth")
+            if os.path.exists(policy_path):
+                print(f"Loading SAC policy checkpoint: {policy_path}")
+            else:
+                raise FileNotFoundError(f"Neither policy.pth nor policy_net.pth found in {dir_path}")
+        
+        self.policy_net.load_state_dict(torch.load(policy_path, map_location=self.device))
+        
+        # Try to load QR-SAC critics, skip if not available (SAC checkpoint)
+        critics_path = os.path.join(dir_path, "critics.pth")
+        if os.path.exists(critics_path):
+            self.critics_net.load_state_dict(torch.load(critics_path, map_location=self.device))
+            target_critics_path = os.path.join(dir_path, "target_critics.pth")
+            if os.path.exists(target_critics_path):
+                self.target_critics_net.load_state_dict(torch.load(target_critics_path, map_location=self.device))
+        else:
+            print("QR-SAC critics not found, initializing randomly (loading from SAC checkpoint)")
+        
+        # Load alpha parameters if available
         alpha_path = os.path.join(dir_path, "alpha.pth")
         if os.path.exists(alpha_path):
             alpha_ckpt = torch.load(alpha_path, map_location=self.device)
